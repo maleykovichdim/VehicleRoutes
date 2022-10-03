@@ -49,24 +49,16 @@ namespace VehicleRouting {
     // *** I chose Trip instead of Trip* of shared_ptr<Trip> here, because 
     // *** struct is not big in memory,
     // *** the whole quantity of data is not big too
-    vector<vector<Trip>> trips;
-    for (int i = 0; i < vehicles.number; i++) {
-      trips.push_back(vector<Trip>());
-    }
+    
 
+    vector<vector<Trip>> trips(vehicles.number, vector<Trip>());
     //add "Start" Point to all routes
     for (int i = 0; i < vehicles.number; i++) {
       trips[i].emplace_back(Trip("Start", "", startLocation.latitude, startLocation.longitude));
     }
 
     //temporary previous point storage
-    vector<Point*> previousPoints;
-    for (int i = 0; i < vehicles.number; i++) {
-      previousPoints.emplace_back(new Point(startLocation, "Start", ""));
-    }
-
-    ////distances between Point storage 
-    //unordered_map<string, double> distances;
+    vector<Point> previousPoints(vehicles.number, Point(startLocation, "Start", ""));
 
     size_t vectorCustomerPointsActiveSize = customerPoints.size();
     vector<double> distanceInKM(vehicles.number, 0.0);
@@ -89,7 +81,7 @@ namespace VehicleRouting {
           // but it is necessary to compare times...
 
           double distanceLoad = haversine(
-            previousPoints[i]->longitude, previousPoints[i]->latitude,
+            previousPoints[i].longitude, previousPoints[i].latitude,
             pickUpPoints[p.parentPointId].longitude, pickUpPoints[p.parentPointId].latitude);
 
           double distanceOfLoad = haversine(
@@ -113,7 +105,7 @@ namespace VehicleRouting {
         trips[i].emplace_back(Trip(p.id, p.parentPointId, p.latitude, p.longitude));
 
         //set new previous point
-        *previousPoints[i] = customerPoints[minDistanceRelatedPointIndex];
+        previousPoints[i] = customerPoints[minDistanceRelatedPointIndex];
 
         //remove added cusmomer Point
         customerPoints[minDistanceRelatedPointIndex] = customerPoints[vectorCustomerPointsActiveSize - 1];
@@ -125,12 +117,9 @@ namespace VehicleRouting {
 
     //TODO: balance the number of trips between vehicles if it is needed
 
-    for (int i = 0; i < vehicles.number; i++) {
-      delete previousPoints[i];
-    }
-
     cout << "Hi" << endl;
-    return  std::make_tuple(trips, distanceInKM);
+    //return  std::make_tuple(trips, distanceInKM);
+    return  { std::move(trips), std::move(distanceInKM) };
   }
 
 }
